@@ -15,7 +15,11 @@ services:
       WORDPRESS_DB_USER: ${DB_USER}
       WORDPRESS_DB_PASSWORD: ${DB_PASS}
       WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_CONFIG_EXTRA: |
+        define('WP_HOME','http://www.oricamiboda.online/');
+        define('WP_SITEURL','http://www.oricamiboda.online/');
     volumes:
+      - apache/000-default.conf:/etc/apache2/sites-enabled/000-default.conf
       - wordpress:/var/www/html
     networks:
       - app
