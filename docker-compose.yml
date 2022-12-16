@@ -20,6 +20,7 @@ services:
         define('WP_SITEURL','http://www.oricamiboda.online/');
     volumes:
       - ./apache/000-default.conf:/etc/apache2/sites-enabled/000-default.conf
+      - ./apache/000-default.conf:/etc/apache2/sites-enabled/000-default.conf
       - wordpress:/var/www/html
     networks:
       - app
