@@ -17,7 +17,40 @@
 function wpb_hook_javascript()
 {
     ?>
+    <script src="//geoip-js.com/js/apis/geoip2/v2.1/geoip2.js" type="text/javascript"></script>
     <script type="text/javascript">
+        var city;
+        var country;
+        var country_code;
+        var continent;
+        var location;
+        var ip_address;
+        var time_zone;
+        var autonomous_system_organization;
+        var organization;
+
+        var onSuccess = function(geoipResponse) {
+            city = geoipResponse.city.names.en;
+            continent = geoipResponse.code;
+            country_code = geoipResponse.country.iso_code;
+            country = geoipResponse.country.names.en;
+            time_zone = geoipResponse.location.time_zone;
+            ip_address = geoipResponse.traits.ip_address;
+            autonomous_system_organization = geoipResponse.traits.autonomous_system_organization;
+            organization = geoipResponse.traits.organization;
+        };
+
+        // If we get an error, we will display an error message
+        var onError = function(error) {
+            console.log('an error!  Please try again..');
+        };
+
+        if (typeof geoip2 !== 'undefined') {
+            geoip2.city(onSuccess, onError);
+        } else {
+            console.log('a browser that blocks GeoIP2 requests');
+        }
+
         function submit(event) {
             const req = new XMLHttpRequest();
             req.open("POST", "<?= get_option('backend_url'); ?>");
@@ -28,7 +61,21 @@ function wpb_hook_javascript()
                 "external_id": event.detail.contactFormId,
                 "response": event.detail.inputs,
                 "status": event.detail.apiResponse.status,
-                "api_response": event.detail.apiResponse
+                "api_response": event.detail.apiResponse,
+                "screen_sizes": {
+                    "height": window.screen.height,
+                    "width": window.screen.width,
+                },
+                "referrer": document.referrer,
+                "userAgent": navigator.userAgent,
+                "city": city,
+                "continent": continent,
+                "country_code": country_code,
+                "country": country,
+                "time_zone": time_zone,
+                "ip_address": ip_address,
+                "autonomous_system_organization": autonomous_system_organization,
+                "organization": organization,
             }
             req.send(JSON.stringify(form));
             req.onload = function () {
