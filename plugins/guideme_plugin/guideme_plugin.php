@@ -28,6 +28,10 @@ function wpb_hook_javascript()
         var time_zone;
         var autonomous_system_organization;
         var organization;
+        var duration;
+        var visitedPages;
+        var sessionStartTime;
+        var interactions;
 
         var onSuccess = function(geoipResponse) {
             city = geoipResponse.city.names.en;
@@ -49,6 +53,13 @@ function wpb_hook_javascript()
             geoip2.city(onSuccess, onError);
         } else {
             console.log('a browser that blocks GeoIP2 requests');
+        }
+
+        function calculateSessionDuration() {
+            const sessionStartTime = parseInt(localStorage.getItem('sessionStartTime'), 10);
+            const currentTime = new Date().getTime();
+            const durationInMilliseconds = currentTime - sessionStartTime;
+            return Math.floor(durationInMilliseconds / 1000);
         }
 
         function submit(event) {
@@ -76,6 +87,10 @@ function wpb_hook_javascript()
                 "ip_address": ip_address,
                 "autonomous_system_organization": autonomous_system_organization,
                 "organization": organization,
+                "duration": calculateSessionDuration(),
+                "visitedPages": localStorage.getItem("visitedPages"),
+                "sessionStartTime": localStorage.getItem("sessionStartTime"),
+                "interactions": localStorage.getItem("interactions"),
             }
             req.send(JSON.stringify(form));
             req.onload = function () {
@@ -92,6 +107,127 @@ function wpb_hook_javascript()
     <?php
 }
 add_action('wp_head', 'wpb_hook_javascript');
+
+function tracking_hook_javascript()
+{
+    ?>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', () => {
+            // Helper function to get current time
+            function getCurrentTime() {
+                return new Date().getTime();
+            }
+
+            // Initialize or update the session start time
+            if (!localStorage.getItem('sessionStartTime')) {
+                localStorage.setItem('sessionStartTime', getCurrentTime());
+            }
+
+            // Track the number of page clicks
+            const currentPage = window.location.href;
+
+            // Get the stored visited pages or initialize an empty array
+            let visitedPages = JSON.parse(localStorage.getItem('visitedPages')) || [];
+
+            // Check if the current page is already in the visitedPages array
+            if (!visitedPages.includes(currentPage)) {
+                visitedPages.push(currentPage);  // Add the current page to visitedPages
+                localStorage.setItem('visitedPages', JSON.stringify(visitedPages));  // Store the updated list
+            }
+
+            // Count the number of unique URLs visited
+            const pageVisitCount = visitedPages.length;
+            console.log(`User has visited ${pageVisitCount} unique pages.`);
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Helper function to store interaction data in localStorage
+            function storeInteractionData(category, action, label) {
+                const timestamp = new Date().toISOString();
+                const interactionData = {
+                    category: category,
+                    action: action,
+                    label: label,
+                    timestamp: timestamp
+                };
+
+                // Retrieve existing data from localStorage
+                let interactions = JSON.parse(localStorage.getItem('interactions')) || [];
+                interactions.push(interactionData);
+
+                // Store updated data back to localStorage
+                localStorage.setItem('interactions', JSON.stringify(interactions));
+            }
+
+            // Button clicks
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    storeInteractionData('Button Click', event.target.textContent || 'Unknown Button', window.location.href);
+                });
+            });
+
+            // Navigation clicks (e.g., menu, links)
+            document.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', (event) => {
+                    storeInteractionData('Navigation Click', event.target.href, window.location.href);
+                });
+            });
+
+            // Call-to-action (CTA) clicks
+            document.querySelectorAll('.cta-button').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    storeInteractionData('CTA Click', event.target.textContent || 'Unknown CTA', window.location.href);
+                });
+            });
+
+            // Product or content clicks
+            document.querySelectorAll('.product-item, .content-item').forEach(item => {
+                item.addEventListener('click', (event) => {
+                    storeInteractionData('Product/Content Click', event.target.dataset.itemId || 'Unknown Item', window.location.href);
+                });
+            });
+
+            // Advertisement clicks
+            document.querySelectorAll('.ad').forEach(ad => {
+                ad.addEventListener('click', (event) => {
+                    storeInteractionData('Advertisement Click', event.target.dataset.adId || 'Unknown Ad', window.location.href);
+                });
+            });
+
+            // Social sharing button clicks
+            document.querySelectorAll('.social-share').forEach(button => {
+                button.addEventListener('click', (event) => {
+                    storeInteractionData('Social Share Click', event.target.dataset.network || 'Unknown Network', window.location.href);
+                });
+            });
+
+            // Dropdown or option clicks
+            document.querySelectorAll('select').forEach(select => {
+                select.addEventListener('change', (event) => {
+                    storeInteractionData('Dropdown Click', event.target.value, window.location.href);
+                });
+            });
+
+            // Clicks on dynamic elements
+            document.querySelectorAll('.dynamic-element').forEach(element => {
+                element.addEventListener('click', (event) => {
+                    storeInteractionData('Dynamic Element Click', event.target.dataset.elementId || 'Unknown Element', window.location.href);
+                });
+            });
+
+            // Checkbox/radio button selections
+            document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(input => {
+                input.addEventListener('change', (event) => {
+                    storeInteractionData('Checkbox/Radio Click', event.target.name + ': ' + event.target.value, window.location.href);
+                });
+            });
+        });
+    </script>
+    <?php
+}
+add_action('wp_head', 'tracking_hook_javascript');
+
 
 function mt_options() {
     $edit = add_menu_page(
