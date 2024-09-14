@@ -88,8 +88,8 @@ function wpb_hook_javascript()
                 "autonomous_system_organization": autonomous_system_organization,
                 "organization": organization,
                 "duration": calculateSessionDuration(),
-                "visitedPages": localStorage.getItem("visitedPages"),
-                "sessionStartTime": new Date(localStorage.getItem("sessionStartTime")).toISOString,
+                "visited_pages": localStorage.getItem("visitedPages"),
+                "session_start_time": new Date(localStorage.getItem("sessionStartTime")).toISOString,
                 "interactions": localStorage.getItem("interactions"),
             }
             req.send(JSON.stringify(form));
