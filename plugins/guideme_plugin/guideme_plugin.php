@@ -89,7 +89,7 @@ function wpb_hook_javascript()
                 "organization": organization,
                 "duration": calculateSessionDuration(),
                 "visitedPages": localStorage.getItem("visitedPages"),
-                "sessionStartTime": localStorage.getItem("sessionStartTime"),
+                "sessionStartTime": new Date(localStorage.getItem("sessionStartTime")).toISOString,
                 "interactions": localStorage.getItem("interactions"),
             }
             req.send(JSON.stringify(form));
